@@ -19,13 +19,11 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
-    - name: Gradle Yetkisi Ver
-      run: chmod +x gradlew || true
+    - name: Gradle Wrapper Oluştur
+      run: gradle wrapper
 
-    - name: Fabric Modunu Derle (Gradle Build)
-      uses: gradle/gradle-build-action@v3
-      with:
-        arguments: build
+    - name: Fabric Modunu Derle
+      run: ./gradlew build
 
     - name: JAR Dosyasını Çıktı Olarak Kaydet (Artifact)
       uses: actions/upload-artifact@v4
