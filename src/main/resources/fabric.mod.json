@@ -1,19 +1,20 @@
 {
   "schemaVersion": 1,
-  "id": "btmod",
-  "version": "${version}",
-  "name": "Minecraft Bluetooth Mod",
-  "description": "Wi-Fi olmadan Bluetooth ile local multiplayer oynama modu.",
-  "authors": ["Turna"],
+  "id": "minecraft-bluetooth-mod",
+  "version": "1.0.0",
+  "name": "Bluetooth Multiplayer Mod",
+  "description": "Cross-platform Bluetooth multiplayer without Wi-Fi for Fabric 1.21+",
+  "authors": ["salkok872-beep"],
+  "contact": {},
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": ["com.example.btmod.BluetoothMod"]
+    "main": [
+      "com.salkok.bluetoothmod.BluetoothMod"
+    ]
   },
-  "mixins": ["btmod.mixins.json"],
   "depends": {
-    "fabricloader": ">=${loader_version}",
-    "minecraft": "~${minecraft_version}",
-    "java": ">=21"
+    "fabricloader": ">=0.15.11",
+    "minecraft": "~1.21"
   }
 }
