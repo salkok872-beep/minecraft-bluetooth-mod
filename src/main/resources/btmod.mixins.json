@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.example.btmod.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": [
+    "OpenToLanScreenMixin",
+    "MultiplayerScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
