@@ -19,7 +19,7 @@ public class BluetoothDeviceSelectionScreen extends Screen {
     private final AndroidBluetoothBridge bridge;
 
     public BluetoothDeviceSelectionScreen(Screen parent) {
-        super(Text.literal("Bluetooth Cihazları"));
+        super(Text.literal("Bluetooth Cihazlari"));
         this.parent = parent;
         this.bridge = new AndroidBluetoothBridge();
     }
@@ -31,7 +31,7 @@ public class BluetoothDeviceSelectionScreen extends Screen {
 
         if (devices.isEmpty()) {
             this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Eşleşmiş Cihaz Bulunamadı"),
+                Text.literal("Eslesmis Cihaz Bulunamadi"),
                 b -> {}
             ).dimensions(this.width / 2 - 100, y, 200, 20).build());
         } else {
@@ -59,7 +59,7 @@ public class BluetoothDeviceSelectionScreen extends Screen {
                 if (localPort != -1) {
                     this.client.execute(() -> {
                         ServerInfo serverInfo = new ServerInfo("Bluetooth World", "127.0.0.1:" + localPort, false);
-                        ConnectScreen.connect(this.parent, this.client, ServerAddress.parse("127.0.0.1:" + localPort), serverInfo, false);
+                        ConnectScreen.connect(this.parent, this.client, ServerAddress.parse("127.0.0.1:" + localPort), serverInfo, false, null);
                     });
                 }
             }
@@ -68,7 +68,7 @@ public class BluetoothDeviceSelectionScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context);
+        this.renderBackground(context, mouseX, mouseY, delta);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFFFF);
         super.render(context, mouseX, mouseY, delta);
     }
