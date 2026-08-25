@@ -19,7 +19,7 @@ jobs:
           gradle-version: 8.1.1
 
       - name: Build with Gradle
-        run: gradle build
+        run: gradle build --stacktrace
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
