@@ -1,6 +1,7 @@
 package com.salkok.bluetoothmod.android;
 
 import com.salkok.bluetoothmod.BluetoothMod;
+import com.salkok.bluetoothmod.bluetooth.BluetoothBridge;
 import com.salkok.bluetoothmod.bluetooth.BluetoothConnection;
 import com.salkok.bluetoothmod.bluetooth.BluetoothDeviceInfo;
 import com.salkok.bluetoothmod.bluetooth.BluetoothTunnel;
@@ -11,7 +12,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
-public class AndroidBluetoothBridge {
+public class AndroidBluetoothBridge extends BluetoothBridge {
     public static final UUID MC_BT_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private Object bluetoothAdapter;
 
@@ -21,35 +22,37 @@ public class AndroidBluetoothBridge {
             Method getDefaultAdapter = adapterClass.getMethod("getDefaultAdapter");
             this.bluetoothAdapter = getDefaultAdapter.invoke(null);
         } catch (Exception e) {
-            BluetoothMod.LOGGER.warn("Android Bluetooth Adapter yüklenemedi (Android dışı ortam): " + e.getMessage());
+            BluetoothMod.LOGGER.warn("Android Bluetooth Adapter yuklenemedi: " + e.getMessage());
         }
     }
 
+    @Override
     public void startServer() {
         if (bluetoothAdapter == null) return;
         new Thread(() -> {
             try {
                 Method listenMethod = bluetoothAdapter.getClass().getMethod("listenUsingRfcommWithServiceRecord", String.class, UUID.class);
                 Object serverSocket = listenMethod.invoke(bluetoothAdapter, "MinecraftBT", MC_BT_UUID);
-                BluetoothMod.LOGGER.info("Android Bluetooth Dinleyici Başlatıldı.");
+                BluetoothMod.LOGGER.info("Android Bluetooth Dinleyici Baslatildi.");
 
                 Method acceptMethod = serverSocket.getClass().getMethod("accept");
                 while (true) {
                     Object socket = acceptMethod.invoke(serverSocket);
                     if (socket != null) {
-                        BluetoothMod.LOGGER.info("Android Cihaz Bağlandı!");
+                        BluetoothMod.LOGGER.info("Android Cihaz Baglandi!");
                         BluetoothConnection conn = new ReflectionAndroidConnection(socket);
                         BluetoothTunnel tunnel = new BluetoothTunnel();
                         int localPort = tunnel.startLocalProxy(conn);
-                        BluetoothMod.LOGGER.info("Android Bluetooth Tüneli Port " + localPort + " üzerinde aktif.");
+                        BluetoothMod.LOGGER.info("Android Bluetooth Tuneli Port " + localPort + " uzerinde aktif.");
                     }
                 }
             } catch (Exception e) {
-                BluetoothMod.LOGGER.error("Android Bluetooth Sunucu Hatası: ", e);
+                BluetoothMod.LOGGER.error("Android Bluetooth Sunucu Hatasi: ", e);
             }
         }).start();
     }
 
+    @Override
     public BluetoothConnection connectToDevice(String address) {
         if (bluetoothAdapter == null) return null;
         try {
@@ -67,11 +70,12 @@ public class AndroidBluetoothBridge {
 
             return new ReflectionAndroidConnection(socket);
         } catch (Exception e) {
-            BluetoothMod.LOGGER.error("Android Bluetooth Bağlantı Hatası (" + address + "): ", e);
+            BluetoothMod.LOGGER.error("Android Bluetooth Baglanti Hatasi (" + address + "): ", e);
             return null;
         }
     }
 
+    @Override
     public List<BluetoothDeviceInfo> getPairedDevices() {
         List<BluetoothDeviceInfo> list = new ArrayList<>();
         if (bluetoothAdapter == null) return list;
@@ -88,7 +92,7 @@ public class AndroidBluetoothBridge {
                 }
             }
         } catch (Exception e) {
-            BluetoothMod.LOGGER.error("Eşleşmiş cihazlar alınamadı: ", e);
+            BluetoothMod.LOGGER.error("Eslesmis cihazlar alinamadi: ", e);
         }
         return list;
     }
