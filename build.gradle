@@ -16,6 +16,7 @@ dependencies {
     mappings "net.fabricmc:yarn:1.20.1+build.10:v2"
     modImplementation "net.fabricmc:fabric-loader:0.14.22"
     modImplementation "net.fabricmc.fabric-api:fabric-api:0.87.0+1.20.1"
+    compileOnly "com.google.android:android:4.1.1.4"
 }
 
 tasks.withType(JavaCompile).configureEach {
