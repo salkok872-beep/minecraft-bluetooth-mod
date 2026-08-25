@@ -120,6 +120,9 @@ public class AndroidBluetoothBridge extends BluetoothBridge {
                 Method getInputStream = socket.getClass().getMethod("getInputStream");
                 return (InputStream) getInputStream.invoke(socket);
             } catch (Exception e) {
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                }
                 throw new IOException(e);
             }
         }
@@ -130,6 +133,9 @@ public class AndroidBluetoothBridge extends BluetoothBridge {
                 Method getOutputStream = socket.getClass().getMethod("getOutputStream");
                 return (OutputStream) getOutputStream.invoke(socket);
             } catch (Exception e) {
+                if (e instanceof IOException) {
+                    throw (IOException) e;
+                }
                 throw new IOException(e);
             }
         }
