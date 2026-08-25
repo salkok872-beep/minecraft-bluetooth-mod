@@ -1,20 +1,23 @@
 package com.salkok.bluetoothmod.host;
 
-import com.salkok.bluetoothmod.bluetooth.BluetoothBridge;
-import com.salkok.bluetoothmod.BluetoothMod;
+import com.salkok.bluetoothmod.android.AndroidBluetoothBridge;
 
 public class BluetoothHost {
-    private static final BluetoothHost INSTANCE = new BluetoothHost();
-    private boolean isRunning = false;
+    private static BluetoothHost instance;
+    private final AndroidBluetoothBridge bridge;
+
+    private BluetoothHost() {
+        this.bridge = new AndroidBluetoothBridge();
+    }
 
     public static BluetoothHost getInstance() {
-        return INSTANCE;
+        if (instance == null) {
+            instance = new BluetoothHost();
+        }
+        return instance;
     }
 
     public void startHostServer() {
-        if (isRunning) return;
-        isRunning = true;
-        BluetoothMod.LOGGER.info("Bluetooth Host yayini baslatildi.");
-        BluetoothBridge.getInstance().startServer();
+        bridge.startServer();
     }
 }
