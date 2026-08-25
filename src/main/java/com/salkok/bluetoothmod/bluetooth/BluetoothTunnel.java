@@ -1,57 +1,124 @@
 package com.salkok.bluetoothmod.bluetooth;
 
 import com.salkok.bluetoothmod.BluetoothMod;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class BluetoothTunnel {
-    private ServerSocket localProxyServer;
-    private boolean running = false;
 
-    public int startLocalProxy(BluetoothConnection btConnection) {
+    private ServerSocket localProxyServer;
+    private volatile boolean running;
+
+    public int startLocalProxy(
+            BluetoothConnection btConnection
+    ) {
+
+        if (btConnection == null ||
+                !btConnection.isConnected()) {
+            return -1;
+        }
+
         try {
-            localProxyServer = new ServerSocket(0);
-            int localPort = localProxyServer.getLocalPort();
+
+            localProxyServer =
+                    new ServerSocket(0);
+
+            int localPort =
+                    localProxyServer.getLocalPort();
+
             running = true;
 
             new Thread(() -> {
-                while (running) {
-                    try {
-                        Socket mcSocket = localProxyServer.accept();
-                        bridgeStreams(mcSocket.getInputStream(), btConnection.getOutputStream());
-                        bridgeStreams(btConnection.getInputStream(), mcSocket.getOutputStream());
-                    } catch (Exception e) {
-                        BluetoothMod.LOGGER.error("Tünel aktarım hatası: ", e);
+
+                try {
+
+                    Socket minecraftSocket =
+                            localProxyServer.accept();
+
+                    bridgeStreams(
+                            minecraftSocket.getInputStream(),
+                            btConnection.getOutputStream()
+                    );
+
+                    bridgeStreams(
+                            btConnection.getInputStream(),
+                            minecraftSocket.getOutputStream()
+                    );
+
+                } catch (Exception e) {
+
+                    if (running) {
+                        BluetoothMod.LOGGER.error(
+                                "Bluetooth client tünel hatası.",
+                                e
+                        );
                     }
+
                 }
-            }).start();
+
+            }, "Minecraft-Bluetooth-LocalProxy").start();
 
             return localPort;
+
         } catch (Exception e) {
-            BluetoothMod.LOGGER.error("Yerel Tünel Başlatılamadı: ", e);
+
+            BluetoothMod.LOGGER.error(
+                    "Yerel Bluetooth proxy başlatılamadı.",
+                    e
+            );
+
             return -1;
         }
     }
 
-    private void bridgeStreams(InputStream in, OutputStream out) {
+    private void bridgeStreams(
+            InputStream input,
+            OutputStream output
+    ) {
+
         new Thread(() -> {
-            byte[] buffer = new byte[8192];
-            int read;
+
+            byte[] buffer =
+                    new byte[16384];
+
             try {
-                while ((read = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
-                    out.flush();
+
+                int read;
+
+                while (running &&
+                        (read = input.read(buffer)) != -1) {
+
+                    output.write(
+                            buffer,
+                            0,
+                            read
+                    );
+
+                    output.flush();
                 }
-            } catch (Exception ignored) {}
-        }).start();
+
+            } catch (Exception ignored) {
+            }
+
+        }, "Minecraft-Bluetooth-Stream").start();
     }
 
     public void stop() {
+
         running = false;
+
         try {
-            if (localProxyServer != null) localProxyServer.close();
-        } catch (Exception ignored) {}
+
+            if (localProxyServer != null) {
+                localProxyServer.close();
+            }
+
+        } catch (Exception ignored) {
+        }
+
+        localProxyServer = null;
     }
-}
+                            }
