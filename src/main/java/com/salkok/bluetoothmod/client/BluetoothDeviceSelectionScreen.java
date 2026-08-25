@@ -4,10 +4,8 @@ import com.salkok.bluetoothmod.android.AndroidBluetoothBridge;
 import com.salkok.bluetoothmod.bluetooth.BluetoothConnection;
 import com.salkok.bluetoothmod.bluetooth.BluetoothDeviceInfo;
 import com.salkok.bluetoothmod.bluetooth.BluetoothTunnel;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ServerAddress;
 import net.minecraft.client.network.ServerInfo;
@@ -63,16 +61,16 @@ public class BluetoothDeviceSelectionScreen extends Screen {
                         try {
                             ServerAddress serverAddress = new ServerAddress("127.0.0.1", localPort);
                             ServerInfo serverInfo = new ServerInfo("Bluetooth World", "127.0.0.1:" + localPort, false);
-                            
-                            // Reflection ile ConnectScreen.connect çağrısı
+
+                            Class<?> connectScreenClass = Class.forName("net.minecraft.client.gui.screen.multiplayer.ConnectScreen");
                             Method connectMethod = null;
-                            for (Method m : ConnectScreen.class.getDeclaredMethods()) {
+                            for (Method m : connectScreenClass.getDeclaredMethods()) {
                                 if (m.getName().equals("connect") || m.getName().equals("method_19800")) {
                                     connectMethod = m;
                                     break;
                                 }
                             }
-                            
+
                             if (connectMethod != null) {
                                 connectMethod.setAccessible(true);
                                 if (connectMethod.getParameterCount() == 5) {
