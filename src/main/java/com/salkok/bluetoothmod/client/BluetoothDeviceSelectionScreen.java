@@ -4,6 +4,7 @@ import com.salkok.bluetoothmod.android.AndroidBluetoothBridge;
 import com.salkok.bluetoothmod.bluetooth.BluetoothConnection;
 import com.salkok.bluetoothmod.bluetooth.BluetoothDeviceInfo;
 import com.salkok.bluetoothmod.bluetooth.BluetoothTunnel;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
@@ -12,6 +13,7 @@ import net.minecraft.client.network.ServerAddress;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.text.Text;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class BluetoothDeviceSelectionScreen extends Screen {
@@ -58,8 +60,30 @@ public class BluetoothDeviceSelectionScreen extends Screen {
                 int localPort = tunnel.startLocalProxy(conn);
                 if (localPort != -1) {
                     this.client.execute(() -> {
-                        ServerInfo serverInfo = new ServerInfo("Bluetooth World", "127.0.0.1:" + localPort, false);
-                        ConnectScreen.connect(this.parent, this.client, ServerAddress.parse("127.0.0.1:" + localPort), serverInfo, false);
+                        try {
+                            ServerAddress serverAddress = new ServerAddress("127.0.0.1", localPort);
+                            ServerInfo serverInfo = new ServerInfo("Bluetooth World", "127.0.0.1:" + localPort, false);
+                            
+                            // Reflection ile ConnectScreen.connect çağrısı
+                            Method connectMethod = null;
+                            for (Method m : ConnectScreen.class.getDeclaredMethods()) {
+                                if (m.getName().equals("connect") || m.getName().equals("method_19800")) {
+                                    connectMethod = m;
+                                    break;
+                                }
+                            }
+                            
+                            if (connectMethod != null) {
+                                connectMethod.setAccessible(true);
+                                if (connectMethod.getParameterCount() == 5) {
+                                    connectMethod.invoke(null, this.parent, this.client, serverAddress, serverInfo, false);
+                                } else if (connectMethod.getParameterCount() == 6) {
+                                    connectMethod.invoke(null, this.parent, this.client, serverAddress, serverInfo, false, null);
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     });
                 }
             }
