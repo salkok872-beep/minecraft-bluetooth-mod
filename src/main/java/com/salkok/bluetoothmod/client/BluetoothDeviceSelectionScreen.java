@@ -58,7 +58,7 @@ public class BluetoothDeviceSelectionScreen extends Screen {
                 int localPort = tunnel.startLocalProxy(conn);
                 if (localPort != -1) {
                     this.client.execute(() -> {
-                        ServerInfo serverInfo = new ServerInfo("Bluetooth World", "127.0.0.1:" + localPort, ServerInfo.ServerType.LAN);
+                        ServerInfo serverInfo = new ServerInfo("Bluetooth World", "127.0.0.1:" + localPort, false);
                         ConnectScreen.connect(this.parent, this.client, ServerAddress.parse("127.0.0.1:" + localPort), serverInfo, false);
                     });
                 }
