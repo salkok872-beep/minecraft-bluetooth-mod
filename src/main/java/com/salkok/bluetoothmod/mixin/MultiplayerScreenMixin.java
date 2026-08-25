@@ -18,10 +18,10 @@ public class MultiplayerScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void addBluetoothJoinButton(CallbackInfo ci) {
-        // Alt ana buton grubunun hemen üstüne, ekranın ortasına yerleştirildi
+        // Ekranın sağ üst köşesine yerleştirildi (Sağdan 130px, yukarıdan 10px)
         this.addDrawableChild(ButtonWidget.builder(
             Text.literal("Bluetooth ile Katıl"), 
             button -> BluetoothClient.openDeviceSelectionScreen(this.client, this)
-        ).dimensions(this.width / 2 - 100, this.height - 52, 200, 20).build());
+        ).dimensions(this.width - 130, 10, 120, 20).build());
     }
 }
