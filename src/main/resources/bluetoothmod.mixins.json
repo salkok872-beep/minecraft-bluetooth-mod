@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.salkok.bluetoothmod.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "OpenToLanScreenMixin",
+    "MultiplayerScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
