@@ -8,7 +8,8 @@ group = 'com.salkok'
 
 repositories {
     mavenCentral()
-    maven { url = 'https://maven.fabricmc.net/' }
+    google() // Android SDK bağımlılıkları için şarttır
+    maven { url 'https://maven.fabricmc.net/' }
 }
 
 dependencies {
