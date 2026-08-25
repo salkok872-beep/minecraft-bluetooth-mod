@@ -22,21 +22,14 @@ public class OpenToLanScreenMixin extends Screen {
     @Inject(method = "init", at = @At("TAIL"))
     private void addBluetoothButton(CallbackInfo ci) {
         this.btnBluetooth = this.addDrawableChild(ButtonWidget.builder(
-            Text.literal("Bluetooth'a Aç: KAPALI"), 
+            Text.literal("Bluetooth'a Ac: KAPALI"), 
             button -> {
                 this.bluetoothEnabled = !this.bluetoothEnabled;
-                button.setMessage(Text.literal("Bluetooth'a Aç: " + (this.bluetoothEnabled ? "AÇIK" : "KAPALI")));
+                button.setMessage(Text.literal("Bluetooth'a Ac: " + (this.bluetoothEnabled ? "ACIK" : "KAPALI")));
+                if (this.bluetoothEnabled) {
+                    BluetoothHost.getInstance().startHostServer();
+                }
             }
         ).dimensions(this.width / 2 - 155, this.height / 4 + 120, 150, 20).build());
-    }
-
-    @Inject(method = "openToLan", at = @At("HEAD"))
-    private void onOpenToLan(CallbackInfo ci) {
-        if (this.btnBluetooth != null) {
-            this.btnBluetooth.active = false;
-        }
-        if (this.bluetoothEnabled) {
-            BluetoothHost.getInstance().startHostServer();
-        }
     }
 }
