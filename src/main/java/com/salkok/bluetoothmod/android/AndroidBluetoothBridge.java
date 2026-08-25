@@ -1,32 +1,141 @@
 package com.salkok.bluetoothmod.android;
 
-import com.salkok.bluetoothmod.bluetooth.*;
 import com.salkok.bluetoothmod.BluetoothMod;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.UUID;
+import com.salkok.bluetoothmod.bluetooth.BluetoothConnection;
+import com.salkok.bluetoothmod.bluetooth.BluetoothDeviceInfo;
+import com.salkok.bluetoothmod.bluetooth.BluetoothTunnel;
 
-public class AndroidBluetoothBridge extends BluetoothBridge {
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.*;
+
+public class AndroidBluetoothBridge {
     public static final UUID MC_BT_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private Object bluetoothAdapter;
 
-    @Override
+    public AndroidBluetoothBridge() {
+        try {
+            Class<?> adapterClass = Class.forName("android.bluetooth.BluetoothAdapter");
+            Method getDefaultAdapter = adapterClass.getMethod("getDefaultAdapter");
+            this.bluetoothAdapter = getDefaultAdapter.invoke(null);
+        } catch (Exception e) {
+            BluetoothMod.LOGGER.warn("Android Bluetooth Adapter yüklenemedi (Android dışı ortam): " + e.getMessage());
+        }
+    }
+
     public void startServer() {
+        if (bluetoothAdapter == null) return;
         new Thread(() -> {
             try {
-                BluetoothMod.LOGGER.info("Android RFCOMM dinleyicisi baslatildi.");
+                Method listenMethod = bluetoothAdapter.getClass().getMethod("listenUsingRfcommWithServiceRecord", String.class, UUID.class);
+                Object serverSocket = listenMethod.invoke(bluetoothAdapter, "MinecraftBT", MC_BT_UUID);
+                BluetoothMod.LOGGER.info("Android Bluetooth Dinleyici Başlatıldı.");
+
+                Method acceptMethod = serverSocket.getClass().getMethod("accept");
+                while (true) {
+                    Object socket = acceptMethod.invoke(serverSocket);
+                    if (socket != null) {
+                        BluetoothMod.LOGGER.info("Android Cihaz Bağlandı!");
+                        BluetoothConnection conn = new ReflectionAndroidConnection(socket);
+                        BluetoothTunnel tunnel = new BluetoothTunnel();
+                        int localPort = tunnel.startLocalProxy(conn);
+                        BluetoothMod.LOGGER.info("Android Bluetooth Tüneli Port " + localPort + " üzerinde aktif.");
+                    }
+                }
             } catch (Exception e) {
-                BluetoothMod.LOGGER.error("Android Bluetooth sunucu hatasi: ", e);
+                BluetoothMod.LOGGER.error("Android Bluetooth Sunucu Hatası: ", e);
             }
         }).start();
     }
 
-    @Override
     public BluetoothConnection connectToDevice(String address) {
-        return null;
+        if (bluetoothAdapter == null) return null;
+        try {
+            Method getRemoteDevice = bluetoothAdapter.getClass().getMethod("getRemoteDevice", String.class);
+            Object device = getRemoteDevice.invoke(bluetoothAdapter, address);
+
+            Method createRfcomm = device.getClass().getMethod("createRfcommSocketToServiceRecord", UUID.class);
+            Object socket = createRfcomm.invoke(device, MC_BT_UUID);
+
+            Method cancelDiscovery = bluetoothAdapter.getClass().getMethod("cancelDiscovery");
+            cancelDiscovery.invoke(bluetoothAdapter);
+
+            Method connectMethod = socket.getClass().getMethod("connect");
+            connectMethod.invoke(socket);
+
+            return new ReflectionAndroidConnection(socket);
+        } catch (Exception e) {
+            BluetoothMod.LOGGER.error("Android Bluetooth Bağlantı Hatası (" + address + "): ", e);
+            return null;
+        }
     }
 
-    @Override
     public List<BluetoothDeviceInfo> getPairedDevices() {
-        return new ArrayList<>();
+        List<BluetoothDeviceInfo> list = new ArrayList<>();
+        if (bluetoothAdapter == null) return list;
+        try {
+            Method getBondedDevices = bluetoothAdapter.getClass().getMethod("getBondedDevices");
+            Set<?> bondedDevices = (Set<?>) getBondedDevices.invoke(bluetoothAdapter);
+            if (bondedDevices != null) {
+                for (Object dev : bondedDevices) {
+                    Method getName = dev.getClass().getMethod("getName");
+                    Method getAddress = dev.getClass().getMethod("getAddress");
+                    String name = (String) getName.invoke(dev);
+                    String address = (String) getAddress.invoke(dev);
+                    list.add(new BluetoothDeviceInfo(name, address));
+                }
+            }
+        } catch (Exception e) {
+            BluetoothMod.LOGGER.error("Eşleşmiş cihazlar alınamadı: ", e);
+        }
+        return list;
+    }
+
+    private static class ReflectionAndroidConnection implements BluetoothConnection {
+        private final Object socket;
+
+        public ReflectionAndroidConnection(Object socket) {
+            this.socket = socket;
+        }
+
+        @Override
+        public boolean isConnected() {
+            try {
+                Method isConnected = socket.getClass().getMethod("isConnected");
+                return (boolean) isConnected.invoke(socket);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            try {
+                Method getInputStream = socket.getClass().getMethod("getInputStream");
+                return (InputStream) getInputStream.invoke(socket);
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+
+        @Override
+        public OutputStream getOutputStream() throws IOException {
+            try {
+                Method getOutputStream = socket.getClass().getMethod("getOutputStream");
+                return (OutputStream) getOutputStream.invoke(socket);
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        }
+
+        @Override
+        public void close() {
+            try {
+                Method close = socket.getClass().getMethod("close");
+                close.invoke(socket);
+            } catch (Exception ignored) {}
+        }
     }
 }
